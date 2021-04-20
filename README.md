@@ -1,2 +1,2 @@
 # homeworkSwift
-Swift homework for GeekBrains
+👋 Swift programming language homework.
