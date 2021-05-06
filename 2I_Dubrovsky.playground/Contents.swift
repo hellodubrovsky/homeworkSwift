@@ -17,19 +17,17 @@ func remainderOfDivision(number: Int) -> Bool {return number % 3 == 0}
 
 
 // MARK: 3. Создать возрастающий массив из 100 чисел.
-let increasingArray = Array (1...100)
+let increasingArray: [Int] = Array (1...100)
 //print(increasingArray)
 
 
 
 // MARK: 4. Удалить из этого массива все четные числа и все числа, которые не делятся на 3.
-
-
-
-
-
-
-
+func removeEvenAndNonDivisibleThree(array: [Int]) -> [Int] {
+    return array.filter({ !evenOrOdd(number: $0) && !remainderOfDivision(number: $0) })
+}
+//var newFilteredArray = removeEvenAndNonDivisibleThree(array: increasingArray)
+//print(newFilteredArray)
 
 
 
