@@ -14,6 +14,10 @@ import UIKit
 
 
 // MARK: Необходимые перечисления
+enum ChoiceOfDoorsAndWindows {
+    case door, window
+}
+
 enum StatusDoorOrWindow: String {
     case open = "открыты"
     case close = "закрыты"
@@ -48,33 +52,21 @@ enum ActionWithTheTrunk {
     case put, remove
 }
 
-//enum CarStatusTrunk: String {
-//    case full = "Полный"
-//    case almostFull = "Почти полный"
-//    case halfFull = "Заполнен на половину"
-//    case lessThanHalf = "Меньше половины = от 25 до 49"
-//    case few = "Мало от 0 до 24"
-//    case empty = "Пустой = 0"
-//    case noTrunk = "Багажник отсутсвует"
-//}
-
 extension UIColor {
     var name: String? {
         switch self {
-        case UIColor.black: return "black"
-        case UIColor.darkGray: return "darkGray"
-        case UIColor.lightGray: return "lightGray"
-        case UIColor.white: return "white"
-        case UIColor.gray: return "gray"
-        case UIColor.red: return "red"
-        case UIColor.green: return "green"
-        case UIColor.blue: return "blue"
-        case UIColor.cyan: return "cyan"
-        case UIColor.yellow: return "yellow"
-        case UIColor.magenta: return "magenta"
-        case UIColor.orange: return "orange"
-        case UIColor.purple: return "purple"
-        case UIColor.brown: return "brown"
+        case UIColor.black: return "черный"
+        case UIColor.darkGray: return "темно-серый"
+        case UIColor.lightGray: return "светло-серый"
+        case UIColor.white: return "белый"
+        case UIColor.gray: return "серый"
+        case UIColor.red: return "красный"
+        case UIColor.green: return "зеленый"
+        case UIColor.blue: return "голубой"
+        case UIColor.yellow: return "желтый"
+        case UIColor.orange: return "оранжевый"
+        case UIColor.brown: return "серый"
+        case UIColor.red: return "красный"
         default: return nil
         }
     }
@@ -86,20 +78,32 @@ extension UIColor {
 struct SportCar {
     let brand: String
     let model: String
-    let color: UIColor
+    var color: UIColor
     let typeBody: TypeBodyCar
     let engine: TypeEngine
     let transmission: TypeTransmission
     var radio: Bool
-    let volumeTrunk: Double
-    var nowInTheTrunk: Double = 0.0
-    
-    private var mileage: Double = 0.0
-    private var statusDoor: StatusDoorOrWindow
     private var statusWindow: StatusDoorOrWindow
     private var statusEngine: StatusEngine
     
-    init(brand: String, model: String, color: UIColor, typeBody: TypeBodyCar, engine: TypeEngine, transmission: TypeTransmission, radio: Bool, volumeTrunk: Double, nowInTheTrunk: Double, mileage: Double, sDoor: StatusDoorOrWindow, sWindow: StatusDoorOrWindow, sEnjine: StatusEngine) {
+    private var statusDoor: StatusDoorOrWindow {
+        willSet {
+            print("Статус дверей будет измен. Сейчас двери \(statusDoor), а будут \(newValue).\n")
+        }
+    }
+    
+    private var mileage: Double {
+        didSet {
+            guard oldValue != mileage else { return }
+            print("Вы проехали \(mileage - oldValue) км. Пробег был \(oldValue) км. Пробег стал \(mileage) км.\n")
+        }
+    }
+    
+    var description: String {
+        return "Ваш автомобиль \(brand) \(model).\nЦвет: \((color.name != nil) ? color.name! : "ПРЕДУПРЕЖДЕНИЕ!ВВЕДЁН НЕКОРРЕКТНЫЙ ЦВЕТ!")\nТип кузова: \(typeBody.rawValue)\nТип двигателя: \(engine.rawValue)\nТрансмиссия: \(transmission.rawValue)\nРадио \(radio ? "имеется" : "отсутсвует")\nПробег: \(mileage) км.\nОкна сейчас \(statusWindow.rawValue)\nДвери сейчас \(statusDoor.rawValue)\nДвигатель сейчас \(statusEngine.rawValue)\n"
+    }
+    
+    init(brand: String, model: String, color: UIColor, typeBody: TypeBodyCar, engine: TypeEngine, transmission: TypeTransmission, radio: Bool, sWindow: StatusDoorOrWindow, sEnjine: StatusEngine, sDoor: StatusDoorOrWindow, mileage: Double = 0.0) {
         self.brand = brand
         self.model = model
         self.color = color
@@ -107,12 +111,64 @@ struct SportCar {
         self.engine = engine
         self.transmission = transmission
         self.radio = radio
-        self.volumeTrunk = volumeTrunk
-        self.nowInTheTrunk = nowInTheTrunk
-        self.mileage = mileage
-        statusDoor = sDoor
         statusWindow = sWindow
         statusEngine = sEnjine
+        statusDoor = sDoor
+        self.mileage = mileage
+    }
+    
+    mutating func goByCar(drive: Double) -> Double {
+        guard drive > 0 else {
+            print("ПРЕДУПРЕЖДЕНИЕ!ВВЕДЕНО НЕКОРРЕКТНОЕ РАССТОЯНИЕ = \(drive) км.! РАССТОЯНИЯ ДОЛЖНО БЫТЬ > 0\n")
+            return self.mileage
+            
+        }
+        self.mileage += drive
+        return self.mileage
+        
+    }
+    
+    mutating func changeStatusDoorAndWindow(whatToChange: ChoiceOfDoorsAndWindows) {
+        switch whatToChange {
+        case .door:
+            if self.statusDoor == .close {
+                self.statusDoor = .open
+            } else {
+                self.statusDoor = .close
+            }
+            print("Стутус дверей изменился, теперь они: \(self.statusDoor).\n")
+        case .window:
+            if self.statusWindow == .close {
+                self.statusWindow = .open
+            } else {
+                self.statusWindow = .close
+            }
+            print("Стутус окон изменился, теперь они: \(self.statusWindow).\n")
+        }
+    }
+    
+    mutating func changeStatusEngine() {
+        if self.statusEngine == .stop {
+            self.statusEngine = .start
+        } else {
+            self.statusEngine = .stop
+        }
     }
 }
 
+var ferrari = SportCar(brand: "Ferrari", model: "F1", color: .purple, typeBody: .sportCar, engine: .petrol, transmission: .auto, radio: true, sWindow: .close, sEnjine: .stop, sDoor: .close)
+print(ferrari.description)
+ferrari.goByCar(drive: 0)
+ferrari.goByCar(drive: 30.0)
+ferrari.goByCar(drive: -50.0)
+ferrari.goByCar(drive: 100.0)
+
+ferrari.changeStatusEngine()
+ferrari.changeStatusDoorAndWindow(whatToChange: .door)
+
+ferrari.color = .red
+print(ferrari.description)
+
+// Типы для грузового авто
+//    let volumeTrunk: Double
+//    var nowInTheTrunk: Double = 0.0
