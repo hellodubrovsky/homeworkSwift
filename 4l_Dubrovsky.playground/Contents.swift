@@ -56,6 +56,11 @@ enum TypeBodyCar: String {
     case sportCar = "спортивный"
 }
 
+// Перечисление, которое используется только для грузового авто.
+    enum ActionWithTheTrunk {
+        case put, remove
+    }
+
 extension UIColor {
     var name: String? {
         switch self {
@@ -117,6 +122,11 @@ class Car {
         return Car.countCar -= 1
     }
     
+    // Метод, который выводит информацию о количестве созданных машин.
+    static func printCountCar() {
+        print("Всего активных машин: \(Car.countCar).\n")
+    }
+    
     // Метод позволяющий завести или заглушить двигатель.
     // Создал в родительском классе, т.к. его могут использовать все машины.
     func changeStatusEngine() {
@@ -130,10 +140,10 @@ class Car {
         switch whatToChange {
         case .door:
             self.statusDoor = self.statusDoor == .open ? .close : .open
-            print("Стутус дверей изменился, теперь они: \(self.statusDoor.rawValue).\n")
+            print("🚙 Стутус дверей изменился, теперь они: \(self.statusDoor.rawValue).\n")
         case .window:
             self.statusWindow = self.statusWindow == .open ? .close : .open
-            print("Стутус окон изменился, теперь они: \(self.statusWindow.rawValue).\n")
+            print("🚙 Стутус окон изменился, теперь они: \(self.statusWindow.rawValue).\n")
         }
     }
     
@@ -186,3 +196,157 @@ class SportCar: Car {
         }
     }
 }
+
+
+
+// MARK: ПОДКЛАСС ГРУЗОВОГО АВТОМОБИЛЯ
+class TrunkCar: Car {
+    let volumeTrunk: Double
+    private var nowInTheTrunk: Double = 0.0
+    
+    init(brand: String, model: String, engine: TypeEngine, transmission: TypeTransmission, color: UIColor, radio: Bool, mileage: Double, statusDoor: StatusDoorOrWindow, statusWindow: StatusDoorOrWindow, statusEngine: StatusEngine, volumeTrunk: Double, nowInTrunk: Double) {
+        guard volumeTrunk > 0 else { fatalError("👉 Предупреждение! Вместимость багажника не может быть меньше или равна 0.") }
+        guard volumeTrunk >= nowInTheTrunk else { fatalError("👉 Предупреждение! Вы пытаетесь положить в багажник груз, вес которого превышает вместимость багажника") }
+        
+        self.volumeTrunk = volumeTrunk
+        self.nowInTheTrunk = nowInTrunk
+        super.init(brand: brand, model: model, engine: engine, transmission: transmission, color: color, radio: radio, mileage: mileage, statusDoor: statusDoor, statusWindow: statusWindow, statusEngine: statusEngine)
+    }
+    
+    // Метод, который позволяет положить или убрать из машины, груз определенного веса.
+    func putOrRemoveFromTheTrunk(action: ActionWithTheTrunk, cargo: Double) {
+        switch action {
+        case .put:
+            switch cargo {
+            case 0:
+                print("👉 Предупреждение! Вы не можете положить в багажник груз весом = 0 кг.\n")
+            case ..<0:
+                print("👉 Предупреждение! Вы не можете положить в багажник груз весом < 0 кг.\n")
+            case 1...:
+                guard (self.nowInTheTrunk + cargo) < volumeTrunk else {
+                print("👉 Предупреждение! Вы не можете положить груз весом \(cargo) кг. У вас в багажнике осталось свободного места на \(self.volumeTrunk - self.nowInTheTrunk) кг.!\n")
+                return
+                }
+                print("Вы положили в багажник груз весом \(cargo) кг. Сейчас в багажнике \(self.nowInTheTrunk + cargo)\n")
+                self.nowInTheTrunk += cargo
+            default:
+                fatalError("Попало в default [put]")
+            }
+        case .remove:
+            switch cargo {
+            case 0:
+                print("👉 Предупреждение! Вы не можете убрать из багажника груз весом = 0 кг.\n")
+            case ..<0:
+                print("👉 Предупреждение! Вы не можете убрать из багажника груз весом < 0 кг.\n")
+            case 0.1...:
+                guard (self.nowInTheTrunk - cargo) >= 0 else {
+                print("👉 Предупреждение! Вы не можете убрать груз весом \(cargo) кг. У вас в багажнике всего \(self.nowInTheTrunk) кг.!\n")
+                return
+                }
+                print("Вы убрали из багажника груз весом \(cargo) кг. Сейчас в багажнике \(self.nowInTheTrunk - cargo) кг.\n")
+                self.nowInTheTrunk -= cargo
+            default:
+                fatalError("Попало в default [remove]")
+            }
+        }
+    }
+    
+    // Дополненный метод родительского класса, позволяющий выводить полную информацию об автомобиле.
+    override func printSpecificInfoAboutCar(amountOfInformation: DisplayedAmountOfInformationAboutTheMachine) {
+        switch amountOfInformation {
+        case .short:
+            print("Бренд: \(brand), модель: \(model)\nТип двигателя: \(engine.rawValue)\n\nТип трансмиссии: \(transmission.rawValue)\n")
+        case .middle:
+            print("Бренд: \(brand), модель: \(model)\nТип двигателя: \(engine.rawValue)\n\nТип трансмиссии: \(transmission.rawValue)\nЦвет кузова: \((color.name != nil) ? color.name! : "👉 Предупреждение!Введён некорректный цвет.")\nРадио: \(radio ? "имеется" : "отсутсвует")\nПробег автомобиля: \(mileage) км.\n")
+        case .full:
+            print("Бренд: \(brand), модель: \(model)\nТип двигателя: \(engine.rawValue)\nТип трансмиссии: \(transmission.rawValue)\nЦвет кузова: \((color.name != nil) ? color.name! : "👉 Предупреждение!Введён некорректный цвет.")\nРадио: \(radio ? "имеется" : "отсутсвует")\nПробег автомобиля: \(mileage) км.\nДвери: \(statusDoor.rawValue)\nОкна: \(statusWindow.rawValue)\nДвигатель: \(statusEngine.rawValue)\nКол-во вмещаемого груза: \(volumeTrunk) кг.\nСейчас груза в багажнике: \(nowInTheTrunk) кг.\n")
+        }
+    }
+}
+
+
+
+
+
+// MARK: ПРИМЕРЫ (Легковой автомобиль)
+
+// Проверим кол-во созданных автомобилей
+Car.printCountCar()
+sleep(1)
+
+var ferrari = SportCar(brand: "Ferrari", model: "F1", engine: .petrol, transmission: .auto, color: .red, radio: true, mileage: 10.0, statusDoor: .close, statusWindow: .close, statusEngine: .stop, roofHatch: false, typeBody: .sportCar, tunning: true)
+
+ferrari.printSpecificInfoAboutCar(amountOfInformation: .full)       // Вывод полной информации
+sleep(3)
+ferrari.printSpecificInfoAboutCar(amountOfInformation: .middle)     // Вывод неполной информации
+sleep(3)
+ferrari.printSpecificInfoAboutCar(amountOfInformation: .short)      // Вывод краткой информации
+sleep(3)
+
+// Убираем тюнинг
+ferrari.changeTunning()
+sleep(1)
+
+// Заводим машину
+ferrari.changeStatusEngine()
+sleep(1)
+
+// Откроем двери
+ferrari.changeStatusDoorAndWindow(whatToChange: .door)
+sleep(1)
+
+// Прокатимся 30 км
+ferrari.driveCertainDistance(distance: 30)
+sleep(1)
+
+// Попробуем прокатиться с некорректным расстоянием
+ferrari.driveCertainDistance(distance: -30)
+sleep(1)
+
+
+// Выведем полную информацию
+ferrari.printSpecificInfoAboutCar(amountOfInformation: .full)
+sleep(5)
+
+
+
+
+
+// MARK: ПРИМЕРЫ (Грузовой автомобиль)
+
+// Проверим-ка сейчас кол-во созданных автомобилей
+Car.printCountCar()     // Т.к. уже была создана Ferrari, кол-во будет = 1.
+sleep(1)
+
+var vaz = TrunkCar(brand: "VAZ", model: "KAMAZ", engine: .diesel, transmission: .manual, color: .white, radio: false, mileage: 120_000, statusDoor: .close, statusWindow: .open, statusEngine: .start, volumeTrunk: 10_000, nowInTrunk: 2_000)
+
+// Выведем полную информацию
+vaz.printSpecificInfoAboutCar(amountOfInformation: .full)
+sleep(3)
+
+// Посмотрим сколько сейчас машин
+Car.printCountCar()     // Создана 1 легковая и 1 грузовая, всего машину будет 2.
+sleep(1)
+
+// Положим в машину корректный груз
+vaz.putOrRemoveFromTheTrunk(action: .put, cargo: 1_000)
+sleep(1)
+
+// Попробуем положить в машину груз, превышающий её грузоподъемность
+vaz.putOrRemoveFromTheTrunk(action: .put, cargo: 50_000)
+sleep(1)
+
+// Попробуем убрать из багажника груз, вес которого превышает текущий груз
+vaz.putOrRemoveFromTheTrunk(action: .remove, cargo: 100_000)
+sleep(1)
+
+// Попробуем убрать из багажника груз, вес которого превышает текущий груз
+vaz.putOrRemoveFromTheTrunk(action: .remove, cargo: 500)
+sleep(1)
+
+// Пора закрыть окна в машине
+vaz.changeStatusDoorAndWindow(whatToChange: .window)
+sleep(1)
+
+// Выведем полную информацию
+vaz.printSpecificInfoAboutCar(amountOfInformation: .full)
