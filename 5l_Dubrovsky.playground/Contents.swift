@@ -88,7 +88,7 @@ protocol CarProtocol: AnyObject {
     func changeStatusDoorAndWindow(whatToChange: ChoiceOfDoorsAndWindows)
     func driveCertainDistance(distance: Double) -> Double
     
-    static var carCount: Int {get}
+    static var carCount: Int {get set}
 }
 
 
@@ -194,7 +194,7 @@ class SportCar: CarProtocol {
         print("🚙 Легковой автомобиль \(brand) \(model) добавлен в автосалон. Теперь в автосалоне \(SportCar.carCount) легковых машин.\n")
     }
     
-    // Уникальные методы легкового автомобиля
+    // Уникальный метод легкового автомобиля, позволяющий установить или снять тюнинг.
     func changeTunning() {
         self.tunning = self.tunning ? false : true
         print(self.tunning ? "🚙 На машину \(self.brand) \(self.model) добавлен тюнинг.\n" : "🚙 С машины \(self.brand) \(self.model) убран тюнинг.\n")
@@ -211,5 +211,105 @@ class SportCar: CarProtocol {
 extension SportCar: CustomStringConvertible {
     var description: String {
         return "Бренд: \(brand), модель: \(model)\nТип двигателя: \(engine.rawValue)\nТип кузова: \(typeBody.rawValue)\nТип трансмиссии: \(transmission.rawValue)\nЦвет кузова: \((color.name != nil) ? color.name! : "👉 Предупреждение!Введён некорректный цвет.")\nРадио: \(radio ? "имеется" : "отсутсвует")\nПробег автомобиля: \(mileage) км.\nДвери: \(statusDoor.rawValue)\nОкна: \(statusWindow.rawValue)\nДвигатель: \(statusEngine.rawValue)\nЛюк: \(roofHatch ? "имеется" : "отсутствует")\nТюнинг: \(tunning ? "имеется" : "отсутствует")\n"
+    }
+}
+
+
+
+
+
+
+// MARK: КЛАСС ГРУЗОВОГО АВТОМОБИЛЯ
+
+class TruckCar: CarProtocol {
+    
+    // Перечисление, которое используется только для грузового авто.
+    enum ActionWithTheTrunk {
+        case put, remove
+    }
+    
+    let brand: String
+    let model: String
+    let engine: TypeEngine
+    let transmission: TypeTransmission
+    var color: UIColor
+    var radio: Bool
+    var mileage: Double
+    var statusDoor: StatusDoorOrWindow
+    var statusWindow: StatusDoorOrWindow
+    var statusEngine: StatusEngine
+    
+    // Уникальные свойства грузового автомобиля.
+    let volumeTrunk: Double
+    private var nowInTheTrunk: Double = 0.0
+    
+    // Cв-во, позволяющее считать количество грузовых автомобилей в авто-салоне.
+    static var carCount: Int = 0
+    
+    // Деинициализатор, в нем мы считаем общее кол-во автомобилей в салоне, после продажи.
+    deinit {
+        print("🚚 Грузовой автомобиль \(brand) \(model) продан. В данный момент в автосалоне \(TruckCar.carCount - 1) грузовый машин.\n")
+        return TruckCar.carCount -= 1
+    }
+    
+    init(brand: String, model: String, engine: TypeEngine, transmission: TypeTransmission, color: UIColor, radio: Bool, mileage: Double, volumeTrunk: Double, nowInTheTrunk: Double, statusDoor: StatusDoorOrWindow, statusWindow: StatusDoorOrWindow, statusEngine: StatusEngine) {
+        guard mileage >= 0 else { fatalError("👉 Внимание! Ошибка! Пробег не может быть меньше 0.") }
+        guard volumeTrunk > 0 else { fatalError("👉 Предупреждение! Вместимость багажника не может быть меньше или равна 0.") }
+        guard volumeTrunk >= nowInTheTrunk else { fatalError("👉 Предупреждение! Вы пытаетесь положить в багажник груз, вес которого превышает вместимость багажника") }
+        
+        self.brand = brand
+        self.model = model
+        self.engine = engine
+        self.transmission = transmission
+        self.color = color
+        self.radio = radio
+        self.mileage = mileage
+        self.volumeTrunk = volumeTrunk
+        self.nowInTheTrunk = nowInTheTrunk
+        self.statusDoor = statusDoor
+        self.statusWindow = statusWindow
+        self.statusEngine = statusEngine
+        
+        // Рассчет общего числа автомобилей.
+        TruckCar.carCount += 1
+        print("🚚 Легковой автомобиль \(brand) \(model) добавлен в автосалон. Теперь в автосалоне \(TruckCar.carCount) легковых машин.\n")
+    }
+    
+    // Уникальный метод грузового автомобиля, который позволяет положить или убрать из машины, груз определенного веса.
+    func putOrRemoveFromTheTrunk(action: ActionWithTheTrunk, cargo: Double) {
+        switch action {
+        case .put:
+            switch cargo {
+            case 0:
+                print("👉 Предупреждение! Вы не можете положить в багажник груз весом = 0 кг.\n")
+            case ..<0:
+                print("👉 Предупреждение! Вы не можете положить в багажник груз весом < 0 кг.\n")
+            case 1...:
+                guard (self.nowInTheTrunk + cargo) < volumeTrunk else {
+                    print("👉 Предупреждение! Вы не можете положить груз весом \(cargo) кг. У вас в багажнике осталось свободного места на \(self.volumeTrunk - self.nowInTheTrunk) кг.!\n")
+                    return
+                }
+                print("Вы положили в багажник груз весом \(cargo) кг. Сейчас в багажнике \(self.nowInTheTrunk + cargo)\n")
+                self.nowInTheTrunk += cargo
+            default:
+                fatalError("Попало в default [put]")
+            }
+        case .remove:
+            switch cargo {
+            case 0:
+                print("👉 Предупреждение! Вы не можете убрать из багажника груз весом = 0 кг.\n")
+            case ..<0:
+                print("👉 Предупреждение! Вы не можете убрать из багажника груз весом < 0 кг.\n")
+            case 0.1...:
+                guard (self.nowInTheTrunk - cargo) >= 0 else {
+                    print("👉 Предупреждение! Вы не можете убрать груз весом \(cargo) кг. У вас в багажнике всего \(self.nowInTheTrunk) кг.!\n")
+                    return
+                }
+                print("Вы убрали из багажника груз весом \(cargo) кг. Сейчас в багажнике \(self.nowInTheTrunk - cargo) кг.\n")
+                self.nowInTheTrunk -= cargo
+            default:
+                fatalError("Попало в default [remove]")
+            }
+        }
     }
 }
