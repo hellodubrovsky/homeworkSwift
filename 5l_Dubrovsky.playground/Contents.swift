@@ -313,3 +313,17 @@ class TruckCar: CarProtocol {
         }
     }
 }
+
+
+
+
+
+
+// MARK: РАСШИРЕНИЕ КЛАССА ГРУЗОВОГО АВТОМОБИЛЯ (Имплетация протокола - "CustomStringConvertible")
+
+extension TruckCar: CustomStringConvertible {
+    var description: String {
+        "Бренд: \(brand), модель: \(model)\nТип двигателя: \(engine.rawValue)\nТип трансмиссии: \(transmission.rawValue)\nЦвет кузова: \((color.name != nil) ? color.name! : "👉 Предупреждение!Введён некорректный цвет.")\nРадио: \(radio ? "имеется" : "отсутсвует")\nПробег автомобиля: \(mileage) км.\nДвери: \(statusDoor.rawValue)\nОкна: \(statusWindow.rawValue)\nДвигатель: \(statusEngine.rawValue)\nКол-во вмещаемого груза: \(volumeTrunk) кг.\nСейчас груза в багажнике: \(nowInTheTrunk) кг.\n"
+    }
+}
+
