@@ -127,3 +127,74 @@ extension CarProtocol {
         return self.mileage
     }
 }
+
+
+
+
+
+
+// MARK: КЛАСС СПОРТИВНОГО АВТОМОБИЛЯ
+
+class SportCar: CarProtocol {
+    
+    // Перечисление, которое используется только для легкового авто.
+    enum TypeBodyCar: String {
+        case sedan = "седан"
+        case coupe = "купе"
+        case hatchback = "хетчбэк"
+        case crossover = "кроссовер"
+        case sportCar = "спортивный"
+    }
+    
+    let brand: String
+    let model: String
+    let engine: TypeEngine
+    let transmission: TypeTransmission
+    var color: UIColor
+    var radio: Bool
+    var mileage: Double
+    var statusDoor: StatusDoorOrWindow
+    var statusWindow: StatusDoorOrWindow
+    var statusEngine: StatusEngine
+    
+    // Уникальные свойства легкового автомобиля.
+    let typeBody: TypeBodyCar
+    let roofHatch: Bool
+    private var tunning: Bool
+    
+    // Cв-во, позволяющее считать количество автомобилей в авто-салоне.
+    static var carCount: Int = 0
+    
+    // Деинициализатор, в нем мы считаем общее кол-во автомобилей в салоне, после продажи.
+    deinit {
+        print("🚙 Легковой автомобиль \(brand) \(model) продан. В данный момент в автосалоне \(SportCar.carCount - 1) легковых машин.\n")
+        return SportCar.carCount -= 1
+    }
+    
+    init(brand: String, model: String, engine: TypeEngine, transmission: TypeTransmission, color: UIColor, radio: Bool, mileage: Double, typeBody: TypeBodyCar, roofHatch: Bool, tunning: Bool, statusDoor: StatusDoorOrWindow, statusWindow: StatusDoorOrWindow, statusEngine: StatusEngine) {
+        guard mileage >= 0 else { fatalError("👉 Внимание! Ошибка! Пробег не может быть меньше 0.") }
+        self.brand = brand
+        self.model = model
+        self.engine = engine
+        self.transmission = transmission
+        self.color = color
+        self.radio = radio
+        self.mileage = mileage
+        self.typeBody = typeBody
+        self.roofHatch = roofHatch
+        self.tunning = tunning
+        self.statusDoor = statusDoor
+        self.statusWindow = statusWindow
+        self.statusEngine = statusEngine
+        
+        // Рассчет общего числа автомобилей.
+        SportCar.carCount += 1
+        print("🚙 Легковой автомобиль \(brand) \(model) добавлен в автосалон. Теперь в автосалоне \(SportCar.carCount) легковых машин.\n")
+    }
+    
+    // Уникальные методы легкового автомобиля
+    func changeTunning() {
+        self.tunning = self.tunning ? false : true
+        print(self.tunning ? "🚙 На машину \(self.brand) \(self.model) добавлен тюнинг.\n" : "🚙 С машины \(self.brand) \(self.model) убран тюнинг.\n")
+    }
+}
