@@ -63,3 +63,67 @@ extension UIColor {
         }
     }
 }
+
+
+
+
+
+
+// MARK: ПРОТОКОЛ АВТОМОБИЛЯ
+
+protocol CarProtocol: AnyObject {
+    var brand: String {get}
+    var model: String {get}
+    var engine: TypeEngine {get}
+    var transmission: TypeTransmission {get}
+    
+    var color: UIColor {get set}
+    var radio: Bool {get set}
+    var mileage: Double {get set}
+    var statusDoor: StatusDoorOrWindow {get set}
+    var statusWindow: StatusDoorOrWindow {get set}
+    var statusEngine: StatusEngine {get set}
+    
+    func changeStatusEngine()
+    func changeStatusDoorAndWindow(whatToChange: ChoiceOfDoorsAndWindows)
+    func driveCertainDistance(distance: Double) -> Double
+}
+
+
+
+
+
+
+// MARK: РАСШИРЕНИЕ ПРОТОКОЛА CAR
+
+extension CarProtocol {
+    
+    // Метод позволяющий завести или заглушить двигатель.
+    func changeStatusEngine() {
+        self.statusEngine = self.statusEngine == .stop ? .start : .stop
+        print(self.statusEngine == .stop ? "🚙 Двигатель \(self.brand) \(self.model) заглушён.\n" : "🚙 Двигатель \(self.brand) \(self.model) заведён.\n")
+    }
+    
+    // Метод позволяющий изменить состояние дверей или окон.
+    func changeStatusDoorAndWindow(whatToChange: ChoiceOfDoorsAndWindows) {
+        switch whatToChange {
+        case .door:
+            self.statusDoor = self.statusDoor == .open ? .close : .open
+            print("🚙 Стутус дверей изменился, теперь они: \(self.statusDoor.rawValue).\n")
+        case .window:
+            self.statusWindow = self.statusWindow == .open ? .close : .open
+            print("🚙 Стутус окон изменился, теперь они: \(self.statusWindow.rawValue).\n")
+        }
+    }
+    
+    // Метод позволяющий изменить состояние дверей или окон.
+    func driveCertainDistance(distance: Double) -> Double {
+        guard distance > 0 else {
+            print("👉 Предупреждение! Автомобиль не поехал, т.к. он не может проехать нулевую или отрицательную дистанцию.\n")
+            return self.mileage
+        }
+        self.mileage += distance
+        print("🚙 Автомобиль проехал \(distance) км., в данный момент пробег состовляет \(self.mileage) км.\n")
+        return self.mileage
+    }
+}
