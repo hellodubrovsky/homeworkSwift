@@ -87,6 +87,8 @@ protocol CarProtocol: AnyObject {
     func changeStatusEngine()
     func changeStatusDoorAndWindow(whatToChange: ChoiceOfDoorsAndWindows)
     func driveCertainDistance(distance: Double) -> Double
+    
+    static var carCount: Int {get}
 }
 
 
@@ -162,7 +164,7 @@ class SportCar: CarProtocol {
     let roofHatch: Bool
     private var tunning: Bool
     
-    // Cв-во, позволяющее считать количество автомобилей в авто-салоне.
+    // Cв-во, позволяющее считать количество легковых автомобилей в авто-салоне.
     static var carCount: Int = 0
     
     // Деинициализатор, в нем мы считаем общее кол-во автомобилей в салоне, после продажи.
@@ -196,5 +198,18 @@ class SportCar: CarProtocol {
     func changeTunning() {
         self.tunning = self.tunning ? false : true
         print(self.tunning ? "🚙 На машину \(self.brand) \(self.model) добавлен тюнинг.\n" : "🚙 С машины \(self.brand) \(self.model) убран тюнинг.\n")
+    }
+}
+
+
+
+
+
+
+// MARK: РАСШИРЕНИЕ КЛАССА ЛЕГКОВОГО АВТОМОБИЛЯ (Имплетация протокола - "CustomStringConvertible")
+
+extension SportCar: CustomStringConvertible {
+    var description: String {
+        return "Бренд: \(brand), модель: \(model)\nТип двигателя: \(engine.rawValue)\nТип кузова: \(typeBody.rawValue)\nТип трансмиссии: \(transmission.rawValue)\nЦвет кузова: \((color.name != nil) ? color.name! : "👉 Предупреждение!Введён некорректный цвет.")\nРадио: \(radio ? "имеется" : "отсутсвует")\nПробег автомобиля: \(mileage) км.\nДвери: \(statusDoor.rawValue)\nОкна: \(statusWindow.rawValue)\nДвигатель: \(statusEngine.rawValue)\nЛюк: \(roofHatch ? "имеется" : "отсутствует")\nТюнинг: \(tunning ? "имеется" : "отсутствует")\n"
     }
 }
