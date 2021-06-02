@@ -84,11 +84,11 @@ protocol CarProtocol: AnyObject {
     var statusWindow: StatusDoorOrWindow {get set}
     var statusEngine: StatusEngine {get set}
     
+    static var carCount: Int {get set}
+    
     func changeStatusEngine()
     func changeStatusDoorAndWindow(whatToChange: ChoiceOfDoorsAndWindows)
     func driveCertainDistance(distance: Double) -> Double
-    
-    static var carCount: Int {get set}
 }
 
 
@@ -248,7 +248,7 @@ class TruckCar: CarProtocol {
     
     // Деинициализатор, в нем мы считаем общее кол-во автомобилей в салоне, после продажи.
     deinit {
-        print("🚚 Грузовой автомобиль \(brand) \(model) продан. В данный момент в автосалоне \(TruckCar.carCount - 1) грузовый машин.\n")
+        print("🚚 Грузовой автомобиль \(brand) \(model) продан. В данный момент в автосалоне \(TruckCar.carCount - 1) грузовых машин.\n")
         return TruckCar.carCount -= 1
     }
     
@@ -272,7 +272,7 @@ class TruckCar: CarProtocol {
         
         // Рассчет общего числа автомобилей.
         TruckCar.carCount += 1
-        print("🚚 Легковой автомобиль \(brand) \(model) добавлен в автосалон. Теперь в автосалоне \(TruckCar.carCount) легковых машин.\n")
+        print("🚚 Грузовой автомобиль \(brand) \(model) добавлен в автосалон. Теперь в автосалоне \(TruckCar.carCount) грузовых машин.\n")
     }
     
     // Уникальный метод грузового автомобиля, который позволяет положить или убрать из машины, груз определенного веса.
@@ -327,3 +327,92 @@ extension TruckCar: CustomStringConvertible {
     }
 }
 
+
+
+
+
+
+// MARK: ПРИМЕРЫ ЛЕГКОВОГО АВТОМОБИЛЯ
+
+// Проверим текущее количество легковых автомобилей в салоне.
+print("Легковых машин сейчас - \(SportCar.carCount).\n")
+sleep(1)
+
+// Добавим новую легковую машину в салон.
+var ferrari: SportCar? = SportCar(brand: "Ferrari", model: "F1", engine: .petrol, transmission: .auto, color: .red, radio: false, mileage: 100.0, typeBody: .sportCar, roofHatch: true, tunning: false, statusDoor: .close, statusWindow: .close, statusEngine: .stop)
+sleep(1)
+
+// Выведем о ней информацию
+print(ferrari!.description)
+sleep(1)
+
+// Чтобы её продать, нужно повесить на неё тюнинг
+ferrari!.changeTunning()
+sleep(1)
+
+// Покупать нашелся, нужно открыть машину и завести её.
+ferrari!.changeStatusDoorAndWindow(whatToChange: .door)
+sleep(1)
+ferrari!.changeStatusEngine()
+sleep(2)
+
+// Пока водитель осматривает Ferrari, в салон прибыл новый автомобиль.
+var tesla: SportCar? = SportCar(brand: "Tesla", model: "Cybertruck", engine: .electrical, transmission: .auto, color: .black, radio: true, mileage: 20_000.0, typeBody: .crossover, roofHatch: false, tunning: false, statusDoor: .open, statusWindow: .open, statusEngine: .start)
+sleep(1)
+
+// Выведем информацию о новом автомобиле.
+print(tesla!.description)
+sleep(1)
+
+// Необходимо завести Tesla в автосалон, расстояние от места покупки до салона 7.2 км.
+tesla!.driveCertainDistance(distance: 7.2)
+sleep(1)
+
+// Давайте заглушим Tesla и закроем у неё окна.
+tesla!.changeStatusDoorAndWindow(whatToChange: .window)
+sleep(1)
+tesla!.changeStatusEngine()
+sleep(1)
+
+// Вернемся к Ferrari, покупатель довольно и забирает её.
+ferrari = nil
+sleep(4)
+
+
+
+
+
+
+// MARK: ПРИМЕРЫ ГРУЗОВОГО АВТОМОБИЛЯ
+
+// Проверим текущее количество грузовых автомобилей в салоне.
+print("Грузовых машин сейчас - \(TruckCar.carCount).\n")
+sleep(1)
+
+// Добавим новую легковую машину в салон.
+var vaz = TruckCar(brand: "VAZ", model: "K5234", engine: .diesel, transmission: .manual, color: .white, radio: false, mileage: 52_000.0, volumeTrunk: 12_000, nowInTheTrunk: 3_670, statusDoor: .close, statusWindow: .open, statusEngine: .stop)
+sleep(1)
+
+// Выведем о ней информацию.
+print(vaz.description)
+sleep(1)
+
+// Попробуем положить в машину корректный груз.
+ vaz.putOrRemoveFromTheTrunk(action: .put, cargo: 1_000)
+ sleep(1)
+
+ // Попробуем положить в машину груз, превышающий её грузоподъемность
+ vaz.putOrRemoveFromTheTrunk(action: .put, cargo: 50_000)
+ sleep(1)
+
+ // Попробуем убрать из багажника груз, вес которого превышает текущий груз
+ vaz.putOrRemoveFromTheTrunk(action: .remove, cargo: 100_000)
+ sleep(1)
+
+ // Попробуем убрать из багажника груз, вес которого превышает текущий груз
+ vaz.putOrRemoveFromTheTrunk(action: .remove, cargo: 500)
+ sleep(1)
+
+ // Пора закрыть окна в машине.
+ vaz.changeStatusDoorAndWindow(whatToChange: .window)
+ sleep(1)
