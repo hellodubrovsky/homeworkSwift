@@ -74,6 +74,23 @@ struct HoldInRocketStruct<T: PresenceWeightProtocol> {
     }
 }
 
+// Расширение с Subscript
+extension HoldInRocketStruct {
+    
+    subscript(index: Int) -> Double? {
+        guard index >= 0 && index < cargoHold.count else { return nil }
+        return cargoHold[index].weight
+    }
+    
+    subscript(indexes: Int...) -> Double? {
+        var totalWeight: Double = 0
+        for index in indexes where index >= 0 && index < cargoHold.count {
+            totalWeight += cargoHold[index].weight
+        }
+        return totalWeight
+    }
+}
+
 
 
 
@@ -129,3 +146,50 @@ foodHold.printingWeightsOnEarthAndInSpace()
 // От руководства пришло поручение, что теперь, в отсек нельзя положить предметы, вес которых более 42 кг.
 // Необходима информация, сколько сейчас в отсеке подходящих и не подходящих элементов для отправки ракеты.
 foodHold.printingLimitedItems(limitation: 42)
+
+// Применим subscription
+foodHold[0]
+foodHold[-1, 0, 1, 4, 2]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+// MARK: Замыкания (НЕ КАСАЕТСЯ ДОМАШНЕГО ЗАДАНИЯ)
+
+// Функция проверяющая, равны числа или нет
+func isEqulasFunc(itemOne: Int, itemTwo: Int) -> Bool {
+    return itemOne == itemTwo
+}
+
+// Закмыкание проверяющее, равны числа или нет
+let isEqalasClosure = { (itemOne: Int, itemTwo: Int) -> Bool in
+    return itemOne == itemTwo
+}
+
+// Можно сократить нашу запись, добавив typealias, в котором укажем тип нашего замыкания
+typealias ClosureType = (Int, Int) -> Bool
+
+let isEqalasClosure2: ClosureType = { itemOne, itemTwo in
+    return itemOne == itemTwo
+}
+
+// Можно сократить ещё.
+let isEqalasClosure3: ClosureType = {
+    return $0 == $1
+}
+
+// Также можно представить в таком виде.
+let isEqalasClosure4: ClosureType = { $0 == $1 } */
