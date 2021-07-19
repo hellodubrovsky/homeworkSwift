@@ -5,6 +5,151 @@ import UIKit
  1. Придумать класс, методы которого могут завершаться неудачей и возвращать либо значение, либо ошибку Error?. Реализовать их вызов и обработать результат метода при помощи конструкции if let, или guard let.
  2. Придумать класс, методы которого могут выбрасывать ошибки. Реализуйте несколько throws-функций. Вызовите их и обработайте результат вызова при помощи конструкции try/catch. */
 
+
+enum PaymentSystems {
+    case mastercard
+    case maestro
+    case visa
+}
+
+enum CardsStatus {
+    case active
+    case blocked
+}
+
+enum OperationATM {
+    case addMoney
+    case withdrawMoney
+}
+
+
+// MARK: Структура банковской карты.
+
+struct BankCard {
+    let nameOfCardHolder: String
+    let paymentSystem: PaymentSystems
+    let pinCode: UInt = UInt.random(in: 1000...9999)
+    
+    private(set) var amountOfMoney: Int
+    private(set) var cardStatus: CardsStatus
+    
+    mutating func changingCardStatus() {
+        if self.cardStatus == .active {
+            self.cardStatus = .blocked
+        } else {
+            self.cardStatus = .active
+        }
+    }
+}
+
+
+// MARK: Класс банкомата.
+
+class ATM {
+    private let idCashMachine: String
+    private let paymentSystem: [PaymentSystems]
+    private let maximumMoneyCapacity: UInt
+    private var minimumMoneyCapacity: UInt
+    private var secretKey: String
+    private var amountOfMoney: UInt
+    
+    init(idCashMachine: String, paymentSystem: [PaymentSystems], maximumMoneyCapacity: UInt, minimumMoneyCapacity: UInt, secretKey: String, amountOfMoney: UInt) {
+        self.idCashMachine = idCashMachine
+        self.paymentSystem = paymentSystem
+        self.maximumMoneyCapacity = maximumMoneyCapacity
+        self.minimumMoneyCapacity = minimumMoneyCapacity
+        self.secretKey = secretKey
+        self.amountOfMoney = amountOfMoney
+    }
+    
+    // [Кассиры] Метод пополнения или снятия денег из банкомата. #3-ошибки
+    func changeOfFundsInATM (secretKey: String, action: OperationATM, deposite: UInt) {
+        guard secretKey == self.secretKey else { fatalError("Секретный ключ не подходит. Операция не доступна") }
+        guard deposite > 0 else { fatalError("Внесенный депозит должен быть больше 0.") }
+        
+        switch action {
+        case .addMoney:
+            guard (deposite + amountOfMoney) <= maximumMoneyCapacity else { fatalError("Сумма денег в банкомате превышает его максимальную вместимость.") }
+            amountOfMoney += deposite
+        case .withdrawMoney:
+            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { fatalError() }
+            amountOfMoney -= deposite
+        }
+    }
+    
+    
+    // [Пользователи] Метод пополнения или снятия денег с карты. #7-ошибок
+    func exchangeOfFundsForUsersCard (card: BankCard, pinCode: UInt, action: OperationATM, deposite: UInt) {
+        guard paymentSystem.contains(card.paymentSystem) else { fatalError("Данный банкомат, не поддерживает платежную систему вашей карты.") }
+        guard card.pinCode == pinCode else { fatalError("Вы ввели некорректный пин-код.") }
+        guard card.cardStatus == .active else { fatalError("Ваша карта заблокирована.") }
+        guard deposite > 0 else { fatalError("Внесенный депозит должен быть больше 0.") }
+        
+        switch action {
+        case .addMoney:
+            guard (deposite + amountOfMoney) > maximumMoneyCapacity else { fatalError("Операция не выполнена, сумма внесенных денег в банкомате превышает его максимальную вместимость.") }
+            print("CARD является константой, необходимо понять, как её сделать переменной")
+            //card.amountOfMoney = card.amountOfMoney + Int(deposite)
+        case .withdrawMoney:
+            guard card.amountOfMoney >= deposite else { fatalError("Операция не выполнена, вы ввели сумму для снятия, превыющую баланс вашей карты.") }
+            guard (amountOfMoney - deposite) >= 0 else { fatalError("Операция не выполнена, вы пытаетесь забрать сумму, превыщающую минимальный лимит данного банкомата.") }
+            print("CARD является константой, необходимо понять, как её сделать переменной")
+            //card.amountOfMoney = card.amountOfMoney - deposite
+        }
+    }
+}
+
+var ATM_0001 = ATM(idCashMachine: "HJFDJS342", paymentSystem: [.mastercard, .visa], maximumMoneyCapacity: 2_000_000, minimumMoneyCapacity: 30_000, secretKey: "FRY34#HDSJ&&HER{2345", amountOfMoney: 500_000)
+ATM_0001.changeOfFundsInATM(secretKey: "FRY34#HDSJ&&HER{2345", action: .addMoney, deposite: 20_000_000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 struct Product {
     var name: String
