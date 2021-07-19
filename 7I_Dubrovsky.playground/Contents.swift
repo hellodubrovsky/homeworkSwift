@@ -28,10 +28,10 @@ enum OperationATM {
 struct BankCard {
     let nameOfCardHolder: String
     let paymentSystem: PaymentSystems
-    let pinCode: UInt = UInt.random(in: 1000...9999)
+    let pinCode: UInt //= UInt.random(in: 1000...9999)
     
     private(set) var amountOfMoney: Int
-    private(set) var cardStatus: CardsStatus
+    private(set) var cardStatus: CardsStatus = .active
     
     mutating func changingCardStatus() {
         if self.cardStatus == .active {
@@ -39,6 +39,14 @@ struct BankCard {
         } else {
             self.cardStatus = .active
         }
+    }
+    
+    mutating func setAmountOfMoney(_ value: Int) {
+        self.amountOfMoney = value
+    }
+    
+    func printingPinCode() {
+        print(pinCode)
     }
 }
 
@@ -64,7 +72,7 @@ class ATM {
     
     // [Кассиры] Метод пополнения или снятия денег из банкомата. #3-ошибки
     func changeOfFundsInATM (secretKey: String, action: OperationATM, deposite: UInt) {
-        guard secretKey == self.secretKey else { fatalError("Секретный ключ не подходит. Операция не доступна") }
+        guard secretKey == self.secretKey else { fatalError("Секретный ключ не подходит. Операция недоступна.") }
         guard deposite > 0 else { fatalError("Внесенный депозит должен быть больше 0.") }
         
         switch action {
@@ -72,14 +80,14 @@ class ATM {
             guard (deposite + amountOfMoney) <= maximumMoneyCapacity else { fatalError("Сумма денег в банкомате превышает его максимальную вместимость.") }
             amountOfMoney += deposite
         case .withdrawMoney:
-            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { fatalError() }
+            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { fatalError("Вы пытаетесь забрать сумму, которая превышает минимальный лимит.") }
             amountOfMoney -= deposite
         }
     }
     
     
     // [Пользователи] Метод пополнения или снятия денег с карты. #7-ошибок
-    func exchangeOfFundsForUsersCard (card: BankCard, pinCode: UInt, action: OperationATM, deposite: UInt) {
+    func exchangeOfFundsForUsersCard (card: inout BankCard, pinCode: UInt, action: OperationATM, deposite: UInt) {
         guard paymentSystem.contains(card.paymentSystem) else { fatalError("Данный банкомат, не поддерживает платежную систему вашей карты.") }
         guard card.pinCode == pinCode else { fatalError("Вы ввели некорректный пин-код.") }
         guard card.cardStatus == .active else { fatalError("Ваша карта заблокирована.") }
@@ -88,19 +96,24 @@ class ATM {
         switch action {
         case .addMoney:
             guard (deposite + amountOfMoney) > maximumMoneyCapacity else { fatalError("Операция не выполнена, сумма внесенных денег в банкомате превышает его максимальную вместимость.") }
-            print("CARD является константой, необходимо понять, как её сделать переменной")
-            //card.amountOfMoney = card.amountOfMoney + Int(deposite)
+            card.setAmountOfMoney(card.amountOfMoney + Int(deposite))
         case .withdrawMoney:
             guard card.amountOfMoney >= deposite else { fatalError("Операция не выполнена, вы ввели сумму для снятия, превыющую баланс вашей карты.") }
             guard (amountOfMoney - deposite) >= 0 else { fatalError("Операция не выполнена, вы пытаетесь забрать сумму, превыщающую минимальный лимит данного банкомата.") }
-            print("CARD является константой, необходимо понять, как её сделать переменной")
-            //card.amountOfMoney = card.amountOfMoney - deposite
+            card.setAmountOfMoney(card.amountOfMoney - Int(deposite))
         }
     }
 }
 
-var ATM_0001 = ATM(idCashMachine: "HJFDJS342", paymentSystem: [.mastercard, .visa], maximumMoneyCapacity: 2_000_000, minimumMoneyCapacity: 30_000, secretKey: "FRY34#HDSJ&&HER{2345", amountOfMoney: 500_000)
-ATM_0001.changeOfFundsInATM(secretKey: "FRY34#HDSJ&&HER{2345", action: .addMoney, deposite: 20_000_000)
+var myFirstCard = BankCard(nameOfCardHolder: "Ilya", paymentSystem: .visa, pinCode: 2134, amountOfMoney: 0)
+var mySecondCard = BankCard(nameOfCardHolder: "Ilya", paymentSystem: .mastercard, pinCode: 2315, amountOfMoney: -60)
+
+var ATM_0001 = ATM(idCashMachine: "JGSJ43JFF893K3J4JKG8R", paymentSystem: [.maestro, .mastercard], maximumMoneyCapacity: 2_000_000, minimumMoneyCapacity: 30_000, secretKey: "KEW423JKF", amountOfMoney: 50_000)
+var ATM_0002 = ATM(idCashMachine: "JGSJ43JDFGDFGDE4JKG8R", paymentSystem: [.maestro, .mastercard, .visa], maximumMoneyCapacity: 2_000_000, minimumMoneyCapacity: 30_000, secretKey: "YYW423JKF", amountOfMoney: 0)
+
+//ATM_0001.exchangeOfFundsForUsersCard(card: &myFirstCard, pinCode: 3222, action: .addMoney, deposite: 1000)
+//ATM_0002.exchangeOfFundsForUsersCard(card: &myFirstCard, pinCode: 3222, action: .addMoney, deposite: 1000)
+
 
 
 
