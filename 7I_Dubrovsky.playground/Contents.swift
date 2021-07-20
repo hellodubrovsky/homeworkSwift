@@ -29,24 +29,33 @@ struct BankCard {
     let nameOfCardHolder: String
     let paymentSystem: PaymentSystems
     let pinCode: UInt //= UInt.random(in: 1000...9999)
-    
+    var cardStatus: CardsStatus = .active
     private(set) var amountOfMoney: Int
-    private(set) var cardStatus: CardsStatus = .active
-    
-    mutating func changingCardStatus() {
-        if self.cardStatus == .active {
-            self.cardStatus = .blocked
-        } else {
-            self.cardStatus = .active
-        }
-    }
     
     mutating func setAmountOfMoney(_ value: Int) {
         self.amountOfMoney = value
     }
+}
+
+// MARK: Расширение с ошибками.
+
+enum CashMachineError: Error {
+    case invalidSecretKey
+    case zeroDeposite
+    case maximumCapacityExceeded(exceedsBy: UInt)
+    case minimumCapacityExceeded(exceedsBy: UInt)
     
-    func printingPinCode() {
-        print(pinCode)
+    var localozedDescription: String {
+        switch self {
+        case .invalidSecretKey:
+            return "Ошибка операции. Введён не верный секретный ключ."
+        case .zeroDeposite:
+            return "Ошибка операции. Внесённый депозит не может быть меньше или равен нулю."
+        case .maximumCapacityExceeded(exceedsBy: let sum):
+            return "Ошибка операции. Сумма средств в банкомате превышает его максимальную вместимость, в данный момент можно положить \(sum) руб."
+        case .minimumCapacityExceeded(exceedsBy: let sum):
+            return "Ошибка операции. Данный банкомат не может выдать заданную сумму. Максимально возможная выдача сретв составляет \(sum) руб."
+        }
     }
 }
 
@@ -70,18 +79,22 @@ class ATM {
         self.amountOfMoney = amountOfMoney
     }
     
-    // [Кассиры] Метод пополнения или снятия денег из банкомата. #3-ошибки
-    func changeOfFundsInATM (secretKey: String, action: OperationATM, deposite: UInt) {
-        guard secretKey == self.secretKey else { fatalError("Секретный ключ не подходит. Операция недоступна.") }
-        guard deposite > 0 else { fatalError("Внесенный депозит должен быть больше 0.") }
+    // [Кассиры] Метод пополнения или снятия денег из банкомата. #4-обработанных-ошибки
+    func changeOfFundsInATM (secretKey: String, action: OperationATM, deposite: UInt) -> (money: UInt?, error: CashMachineError?){
+        guard secretKey == self.secretKey else { return (nil, .invalidSecretKey) }
+        guard deposite > 0 else { return (nil, .zeroDeposite) }
         
         switch action {
         case .addMoney:
-            guard (deposite + amountOfMoney) <= maximumMoneyCapacity else { fatalError("Сумма денег в банкомате превышает его максимальную вместимость.") }
+            guard (deposite + amountOfMoney) <= maximumMoneyCapacity else { return (nil, .maximumCapacityExceeded(exceedsBy: maximumMoneyCapacity - amountOfMoney)) }
             amountOfMoney += deposite
+            print("Вы пополнили банкомат на \(deposite) руб. Сейчас в банкомате: \(amountOfMoney) руб.")
+            return (nil, nil)
         case .withdrawMoney:
-            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { fatalError("Вы пытаетесь забрать сумму, которая превышает минимальный лимит.") }
+            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { return (nil, .minimumCapacityExceeded(exceedsBy: amountOfMoney - minimumMoneyCapacity))
             amountOfMoney -= deposite
+            print("Выдача наличных: \(deposite) руб. В банкомате осталось: \(amountOfMoney) руб.")
+            return (deposite, nil)
         }
     }
     
@@ -105,14 +118,31 @@ class ATM {
     }
 }
 
-var myFirstCard = BankCard(nameOfCardHolder: "Ilya", paymentSystem: .visa, pinCode: 2134, amountOfMoney: 0)
-var mySecondCard = BankCard(nameOfCardHolder: "Ilya", paymentSystem: .mastercard, pinCode: 2315, amountOfMoney: -60)
+let ATM_001 = ATM(idCashMachine: "KRU&UR%", paymentSystem: [.mastercard, .visa], maximumMoneyCapacity: 5_000_000, minimumMoneyCapacity: 30_000_000, secretKey: "RHYF*R#IF*KNFAKJ", amountOfMoney: 5_000)
 
-var ATM_0001 = ATM(idCashMachine: "JGSJ43JFF893K3J4JKG8R", paymentSystem: [.maestro, .mastercard], maximumMoneyCapacity: 2_000_000, minimumMoneyCapacity: 30_000, secretKey: "KEW423JKF", amountOfMoney: 50_000)
-var ATM_0002 = ATM(idCashMachine: "JGSJ43JDFGDFGDE4JKG8R", paymentSystem: [.maestro, .mastercard, .visa], maximumMoneyCapacity: 2_000_000, minimumMoneyCapacity: 30_000, secretKey: "YYW423JKF", amountOfMoney: 0)
+// MARK: [Кассиры] Попробуем выполнить операцию, с не верным секкретным ключом.
+//let operation1 = ATM_001.changeOfFundsInATM(secretKey: "No", action: .addMoney, deposite: 20_000)
+//if let _ = operation1.money {
+//    print("Операция прошла успешно, выдача наличных: \(operation1.money ?? 0) руб.")
+//} else if let error = operation1.error {
+//    print(error.localozedDescription)
+//}
 
-//ATM_0001.exchangeOfFundsForUsersCard(card: &myFirstCard, pinCode: 3222, action: .addMoney, deposite: 1000)
-//ATM_0002.exchangeOfFundsForUsersCard(card: &myFirstCard, pinCode: 3222, action: .addMoney, deposite: 1000)
+// MARK: [Кассиры] Попробуем выполнить операцию, выбрав нулевой депозит.
+//let operation2 = ATM_001.changeOfFundsInATM(secretKey: "RHYF*R#IF*KNFAKJ", action: .withdrawMoney, deposite: 0)
+//if let _ = operation2.money {
+//    print("Операция прошла успешно, выдача наличных: \(operation2.money ?? 0) руб.")
+//} else if let error = operation2.error {
+//    print(error.localozedDescription)
+//}
+
+// MARK: [Кассиры] Попробуем забрать из банкомата сумму, превышающую его наполненность.
+//let operation3 = ATM_001.changeOfFundsInATM(secretKey: "RHYF*R#IF*KNFAKJ", action: .withdrawMoney, deposite: 3_000)
+//if let _ = operation3.money {
+//    print("Операция прошла успешно, выдача наличных: \(operation3.money ?? 0) руб.")
+//} else if let error = operation3.error {
+//    print(error.localozedDescription)
+//}
 
 
 
