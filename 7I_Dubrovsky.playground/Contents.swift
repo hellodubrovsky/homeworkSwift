@@ -12,6 +12,11 @@ enum PaymentSystems {
     case visa
 }
 
+enum AtmStatus {
+    case turnOn
+    case turnOff
+}
+
 enum CardsStatus {
     case active
     case blocked
@@ -42,19 +47,26 @@ struct BankCard {
 enum CashMachineError: Error {
     case invalidSecretKey
     case zeroDeposite
-    case maximumCapacityExceeded(exceedsBy: UInt)
-    case minimumCapacityExceeded(exceedsBy: UInt)
+    case maximumCapacityExceeded(exceedsBy: Int)
+    case minimumCapacityExceeded(exceedsBy: Int)
+    case cashMachineIsOff
     
     var localozedDescription: String {
         switch self {
         case .invalidSecretKey:
-            return "Ошибка операции. Введён не верный секретный ключ."
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            return "Ошибка операции. Введён не верный секретный ключ.\n"
         case .zeroDeposite:
-            return "Ошибка операции. Внесённый депозит не может быть меньше или равен нулю."
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            return "Ошибка операции. Внесённый депозит не может быть меньше или равен нулю.\n"
         case .maximumCapacityExceeded(exceedsBy: let sum):
-            return "Ошибка операции. Сумма средств в банкомате превышает его максимальную вместимость, в данный момент можно положить \(sum) руб."
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            return "Ошибка операции. Сумма средств в банкомате превышает его максимальную вместимость, в данный момент можно положить \(sum) руб.\n"
         case .minimumCapacityExceeded(exceedsBy: let sum):
-            return "Ошибка операции. Данный банкомат не может выдать заданную сумму. Максимально возможная выдача сретв составляет \(sum) руб."
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            return "Ошибка операции. Данный банкомат не может выдать заданную сумму. Максимально возможная выдача средств составляет \(sum) руб.\n"
+        case .cashMachineIsOff:
+            return "Операции невозможны. Банкомат выключен.\n"
         }
     }
 }
@@ -65,12 +77,17 @@ enum CashMachineError: Error {
 class ATM {
     private let idCashMachine: String
     private let paymentSystem: [PaymentSystems]
-    private let maximumMoneyCapacity: UInt
-    private var minimumMoneyCapacity: UInt
+    private let maximumMoneyCapacity: Int
+    private var minimumMoneyCapacity: Int
     private var secretKey: String
-    private var amountOfMoney: UInt
+    private var amountOfMoney: Int
+    private var atmStatus: AtmStatus = .turnOff
     
-    init(idCashMachine: String, paymentSystem: [PaymentSystems], maximumMoneyCapacity: UInt, minimumMoneyCapacity: UInt, secretKey: String, amountOfMoney: UInt) {
+    init(idCashMachine: String, paymentSystem: [PaymentSystems], maximumMoneyCapacity: Int, minimumMoneyCapacity: Int, secretKey: String, amountOfMoney: Int) {
+        guard amountOfMoney > 0 && minimumMoneyCapacity > 0 && maximumMoneyCapacity >= 0 else { fatalError("Что-то меньше 0.") }
+        guard amountOfMoney >= minimumMoneyCapacity else { fatalError("Ошибка. Создание банкомата с суммой меньше мнимального порога недопустимо") }
+        guard amountOfMoney <= maximumMoneyCapacity else { fatalError("Ошибка. Создание банкомата с суммой больше максимального порога недопустимо") }
+        
         self.idCashMachine = idCashMachine
         self.paymentSystem = paymentSystem
         self.maximumMoneyCapacity = maximumMoneyCapacity
@@ -79,8 +96,23 @@ class ATM {
         self.amountOfMoney = amountOfMoney
     }
     
+    // [Кассиры] Включение/выключение банкомата.
+    func changeStateCashMachine(to: AtmStatus, secretKey: String) {
+        guard secretKey == self.secretKey else { fatalError("Ошибка операции. Введён не верный секретный ключ.\n") }
+        if to != atmStatus {
+            atmStatus = to
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            print("Внимание! Банкомат \(atmStatus == .turnOn ? "включён." : "выключен.")\n")
+        } else {
+            sleep(2); print("Операция выполняется ..."); sleep(1)
+            print("Вы выбрали состояние, в котором уже находиться банкомат.\n")
+        }
+    }
+    
+    
     // [Кассиры] Метод пополнения или снятия денег из банкомата. #4-обработанных-ошибки
-    func changeOfFundsInATM (secretKey: String, action: OperationATM, deposite: UInt) -> (money: UInt?, error: CashMachineError?){
+    func changeOfFundsInATM (secretKey: String, action: OperationATM, deposite: Int) -> (money: Int?, error: CashMachineError?){
+        guard atmStatus == .turnOn else { return (nil, .cashMachineIsOff) }
         guard secretKey == self.secretKey else { return (nil, .invalidSecretKey) }
         guard deposite > 0 else { return (nil, .zeroDeposite) }
         
@@ -88,19 +120,22 @@ class ATM {
         case .addMoney:
             guard (deposite + amountOfMoney) <= maximumMoneyCapacity else { return (nil, .maximumCapacityExceeded(exceedsBy: maximumMoneyCapacity - amountOfMoney)) }
             amountOfMoney += deposite
-            print("Вы пополнили банкомат на \(deposite) руб. Сейчас в банкомате: \(amountOfMoney) руб.")
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            print("Вы пополнили банкомат на \(deposite) руб. Сейчас в банкомате: \(amountOfMoney) руб.\n");
             return (nil, nil)
         case .withdrawMoney:
-            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { return (nil, .minimumCapacityExceeded(exceedsBy: amountOfMoney - minimumMoneyCapacity))
+//            guard ()
+            guard (amountOfMoney - deposite) >= minimumMoneyCapacity else { return (nil, .minimumCapacityExceeded(exceedsBy: amountOfMoney - minimumMoneyCapacity)) }
             amountOfMoney -= deposite
-            print("Выдача наличных: \(deposite) руб. В банкомате осталось: \(amountOfMoney) руб.")
+            sleep(2); print("Операция выполняется..."); sleep(1)
+            print("Выдача наличных: \(deposite) руб. В банкомате осталось: \(amountOfMoney) руб.\n");
             return (deposite, nil)
         }
     }
     
     
     // [Пользователи] Метод пополнения или снятия денег с карты. #7-ошибок
-    func exchangeOfFundsForUsersCard (card: inout BankCard, pinCode: UInt, action: OperationATM, deposite: UInt) {
+    func exchangeOfFundsForUsersCard (card: inout BankCard, pinCode: UInt, action: OperationATM, deposite: Int) {
         guard paymentSystem.contains(card.paymentSystem) else { fatalError("Данный банкомат, не поддерживает платежную систему вашей карты.") }
         guard card.pinCode == pinCode else { fatalError("Вы ввели некорректный пин-код.") }
         guard card.cardStatus == .active else { fatalError("Ваша карта заблокирована.") }
@@ -118,32 +153,29 @@ class ATM {
     }
 }
 
-let ATM_001 = ATM(idCashMachine: "KRU&UR%", paymentSystem: [.mastercard, .visa], maximumMoneyCapacity: 5_000_000, minimumMoneyCapacity: 30_000_000, secretKey: "RHYF*R#IF*KNFAKJ", amountOfMoney: 5_000)
+let ATM_001 = ATM(idCashMachine: "KRU&UR%", paymentSystem: [.mastercard, .visa], maximumMoneyCapacity: 5_000_000, minimumMoneyCapacity: 30_000, secretKey: "RHYF*R#IF*KNFAKJ", amountOfMoney: 50_000)
+
+ATM_001.changeStateCashMachine(to: .turnOn, secretKey: "RHYF*R#IF*KNFAKJ")
 
 // MARK: [Кассиры] Попробуем выполнить операцию, с не верным секкретным ключом.
-//let operation1 = ATM_001.changeOfFundsInATM(secretKey: "No", action: .addMoney, deposite: 20_000)
-//if let _ = operation1.money {
-//    print("Операция прошла успешно, выдача наличных: \(operation1.money ?? 0) руб.")
-//} else if let error = operation1.error {
-//    print(error.localozedDescription)
-//}
+let operation1 = ATM_001.changeOfFundsInATM(secretKey: "No", action: .addMoney, deposite: 20_000)
+if let _ = operation1.money {
+    print("Операция прошла успешно, выдача наличных: \(operation1.money ?? 0) руб.")
+} else if let error = operation1.error {
+    print(error.localozedDescription)
+}
 
 // MARK: [Кассиры] Попробуем выполнить операцию, выбрав нулевой депозит.
-//let operation2 = ATM_001.changeOfFundsInATM(secretKey: "RHYF*R#IF*KNFAKJ", action: .withdrawMoney, deposite: 0)
-//if let _ = operation2.money {
-//    print("Операция прошла успешно, выдача наличных: \(operation2.money ?? 0) руб.")
-//} else if let error = operation2.error {
-//    print(error.localozedDescription)
-//}
+let operation2 = ATM_001.changeOfFundsInATM(secretKey: "RHYF*R#IF*KNFAKJ", action: .withdrawMoney, deposite: 0)
+if let error = operation2.error {
+    print(error.localozedDescription)
+}
 
 // MARK: [Кассиры] Попробуем забрать из банкомата сумму, превышающую его наполненность.
-//let operation3 = ATM_001.changeOfFundsInATM(secretKey: "RHYF*R#IF*KNFAKJ", action: .withdrawMoney, deposite: 3_000)
-//if let _ = operation3.money {
-//    print("Операция прошла успешно, выдача наличных: \(operation3.money ?? 0) руб.")
-//} else if let error = operation3.error {
-//    print(error.localozedDescription)
-//}
-
+let operation3 = ATM_001.changeOfFundsInATM(secretKey: "RHYF*R#IF*KNFAKJ", action: .withdrawMoney, deposite: 300_000)
+if let error = operation3.error {
+    print(error.localozedDescription)
+}
 
 
 
